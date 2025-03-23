@@ -118,47 +118,54 @@ export function FormFiles({ tipos }: { tipos: { name: string, id: string }[] }) 
                 </Select>
                 <Button disabled={tipo == ''} onClick={handleClickAdicionar}>Adicionar</Button>
             </div>
-            <div className="mt-4 border-t">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Nome</TableHead>
-                            <TableHead>Tamanho</TableHead>
-                            <TableHead>Tipo</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead></TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {files.map(({ file, tipo, id, csv = null, status = '' }) => (
-                            <TableRow key={id}>
-                                <TableCell>{file.name}</TableCell>
-                                <TableCell>{file.size}</TableCell>
-                                <TableCell>{tipo}</TableCell>
-                                <TableCell>{status}</TableCell>
-                                <TableCell>
-                                    <div className="flex justify-end">
-                                        {csv && <Button size={'sm'} variant={'ghost'} asChild>
-                                            <a target="_blank" href={csv}>
-                                                <DownloadIcon />
-                                            </a>
-                                        </Button>}
-                                        <Button onClick={() => handleProcess(id)} size={'sm'} variant={'ghost'}>
-                                            <PlayIcon />
-                                        </Button>
-                                        <Button onClick={() => handleDelete(id)} size={'sm'} variant={'ghost'}>
-                                            <Trash2Icon />
-                                        </Button>
-                                    </div>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-                <div className="flex justify-end border-t pt-4">
-                    <Button disabled>Processar Todos</Button>
+            {files.length == 0 && (
+                <div className="flex min-h-96 items-center justify-center">
+                    <span className="text-gray-300">Selecione arquivos para processar</span>
                 </div>
-            </div>
+            )}
+            {files.length > 0 && (
+                <div className="mt-4 border-t">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Nome</TableHead>
+                                <TableHead>Tamanho</TableHead>
+                                <TableHead>Tipo</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead></TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {files.map(({ file, tipo, id, csv = null, status = '' }) => (
+                                <TableRow key={id}>
+                                    <TableCell>{file.name}</TableCell>
+                                    <TableCell>{file.size}</TableCell>
+                                    <TableCell>{tipo}</TableCell>
+                                    <TableCell>{status}</TableCell>
+                                    <TableCell>
+                                        <div className="flex justify-end">
+                                            {csv && <Button size={'sm'} variant={'ghost'} asChild>
+                                                <a target="_blank" href={csv}>
+                                                    <DownloadIcon />
+                                                </a>
+                                            </Button>}
+                                            <Button onClick={() => handleProcess(id)} size={'sm'} variant={'ghost'}>
+                                                <PlayIcon />
+                                            </Button>
+                                            <Button onClick={() => handleDelete(id)} size={'sm'} variant={'ghost'}>
+                                                <Trash2Icon />
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                    <div className="flex justify-end border-t pt-4">
+                        <Button disabled>Processar Todos</Button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
