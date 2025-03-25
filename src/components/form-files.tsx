@@ -6,10 +6,12 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import axios from "axios";
 import EventEmitter from "eventemitter3";
+import { filesize } from 'filesize';
 import { filter } from "lodash";
 import { AlertCircleIcon, DownloadIcon, Loader2Icon, PlayIcon, Trash2Icon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Checkbox } from "./ui/checkbox";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 
 const eventEmitter = new EventEmitter()
 const CHANGE_STATUS_NAME = 'change-status'
@@ -34,7 +36,7 @@ export function FormFiles({ tipos }: { tipos: { name: string, id: string }[] }) 
         return filter(files, 'selected')
     }, [files])
 
-    function handleClickAdicionar(): void {
+    function handleChangeInputFiles(): void {
         if (!refInputFile.current) {
             return;
         }
@@ -79,7 +81,7 @@ export function FormFiles({ tipos }: { tipos: { name: string, id: string }[] }) 
             }
 
             formData.append('file', file.file)
-            const { data } = await axios.post<{ csv: string }>(`https://extratos-api.deltex.com.br/direct?template=${tipo}`, formData)
+            const { data } = await axios.post<{ csv: string }>(`https://extratos-api.deltex.com.br/direct?template=${file.tipo}`, formData)
 
             dispatchChangeStatus(id, FILE_STATUS.SUCCESS)
 
@@ -98,38 +100,20 @@ export function FormFiles({ tipos }: { tipos: { name: string, id: string }[] }) 
     }, [files, tipo])
 
     const handleChangeStatus = useCallback((id: string, status: FILE_STATUS) => {
-        console.log(id, status)
-        setFiles(prev => {
-
-            return prev.map(p => {
-                if (p.id == id) {
-                    p.status = status
-                }
-
-                return p
-            })
-        })
+        changeFile(id, { status: status })
     }, [files, tipo])
 
-    
+    const changeFile = useCallback((id: string, data: Partial<FileItem>) => {
+        setFiles(prev => {
+            return prev.map(f => {
+                if (f.id == id || id == '') {
+                    return { ...f, ...data }
+                }
 
-    function handleChangeSelected(id: string, v: string | boolean): void {
-
-        if(id == '') {
-            setFiles(prev => prev.map(f => ({...f, selected: v as boolean})))
-        }
-        
-        if(id.length > 0) {
-            setFiles(prev => {
-                return prev.map(f => {
-                    if(id == f.id) {
-                        f.selected = v as boolean
-                    }
-                    return f
-                })
-            })
-        }
-    }
+                return f;
+            });
+        })
+    }, [files])
 
     useEffect(() => {
 
@@ -141,25 +125,33 @@ export function FormFiles({ tipos }: { tipos: { name: string, id: string }[] }) 
 
     }, [files])
 
+    async function processSelecteds() {
+        await Promise.all(listSelecteds.map(i => handleProcess(i.id)))
+    }
+
+    function deleteAll(): void {
+        listSelecteds.forEach(i => handleDelete(i.id))
+    }
+
     return (
         <div className="w-full container mx-auto mt-4">
 
             <div className="flex gap-4">
-                <Input ref={refInputFile} type="file" multiple />
                 <Select onValueChange={v => setTipo(v)}>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-96">
                         <SelectValue placeholder="Tipo de Extrato" />
                     </SelectTrigger>
                     <SelectContent>
                         <SelectGroup>
                             {tipos.map(t => (
-
                                 <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
                             ))}
                         </SelectGroup>
                     </SelectContent>
                 </Select>
-                <Button disabled={tipo == ''} onClick={handleClickAdicionar}>Adicionar</Button>
+                <Button disabled={tipo == ''} variant="outline" onClick={() => refInputFile.current?.click()}>Selecionar arquivos</Button>
+                <Input className="hidden" onChange={handleChangeInputFiles} ref={refInputFile} type="file" multiple />
+
             </div>
             {files.length == 0 && (
                 <div className="flex min-h-96 items-center justify-center">
@@ -172,7 +164,7 @@ export function FormFiles({ tipos }: { tipos: { name: string, id: string }[] }) 
                         <TableHeader>
                             <TableRow>
                                 <TableHead>
-                                    <Checkbox onCheckedChange={v => handleChangeSelected('', v)} />
+                                    <Checkbox onCheckedChange={v => changeFile('', { selected: !!v })} />
                                 </TableHead>
                                 <TableHead>Nome</TableHead>
                                 <TableHead>Tamanho</TableHead>
@@ -185,12 +177,31 @@ export function FormFiles({ tipos }: { tipos: { name: string, id: string }[] }) 
                             {files.map(({ file, tipo, id, csv = null, status = '', selected }) => (
                                 <TableRow key={id}>
                                     <TableHead>
-                                    <Checkbox checked={selected} onCheckedChange={(v) => handleChangeSelected(id, v)} />
+                                        <Checkbox checked={selected} onCheckedChange={(v) => changeFile(id, { selected: !!v })} />
                                     </TableHead>
                                     <TableCell>{file.name}</TableCell>
-                                    <TableCell>{file.size}</TableCell>
-                                    <TableCell>{tipo}</TableCell>
-                                    <TableCell>{status}</TableCell>
+                                    <TableCell>{filesize(file.size, { round: 1})}</TableCell>
+                                    <TableCell>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button className="px-0" variant={'link'}>
+                                                    {tipos.find(t => t.id == tipo)?.name || ''}
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                {tipos.filter(t => t.id != tipo).map(t => (
+                                                    <DropdownMenuItem onClick={() => changeFile(id, { tipo: t.id })} key={t.id}>{t.name}</DropdownMenuItem>
+                                                ))}
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </TableCell>
+                                    <TableCell>
+                                        <span className="text-sm text-stone-600">
+                                            {
+                                                ["PENDENTE", "RODANDO", "CONCLUIDO", "FALHOU"][parseInt(status.toString())]
+                                            }
+                                        </span>
+                                    </TableCell>
                                     <TableCell>
                                         <div className="flex items-center justify-end">
                                             {status == FILE_STATUS.PROCESSING && (
@@ -220,8 +231,15 @@ export function FormFiles({ tipos }: { tipos: { name: string, id: string }[] }) 
                             ))}
                         </TableBody>
                     </Table>
-                    <div className="flex justify-end border-t pt-4">
-                        <Button disabled={listSelecteds.length == 0}>Processar Todos ({listSelecteds.length})</Button>
+                    <div className="flex gap-4 justify-end border-t pt-4">
+                        <Button onClick={() => deleteAll()} variant={'destructive'} disabled={listSelecteds.length == 0}>
+                            <Trash2Icon />
+                            Excluir ({listSelecteds.length})
+                        </Button>
+                        <Button onClick={processSelecteds} disabled={listSelecteds.length == 0}>
+                            <PlayIcon />
+                            Processar ({listSelecteds.length})
+                        </Button>
                     </div>
                 </div>
             )}
