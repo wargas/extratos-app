@@ -81,7 +81,7 @@ export function FormFiles({ tipos }: { tipos: { name: string, id: string }[] }) 
             }
 
             formData.append('file', file.file)
-            const { data } = await axios.post<{ csv: string }>(`https://extratos-api.deltex.com.br/direct?template=${file.tipo}`, formData)
+            const { data } = await axios.post<{ csv: string, registros:number }>(`https://extratos-api.deltex.com.br/direct?template=${file.tipo}`, formData)
 
             dispatchChangeStatus(id, FILE_STATUS.SUCCESS)
 
