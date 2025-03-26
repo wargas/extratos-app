@@ -12,19 +12,13 @@ import { AlertCircleIcon, DownloadIcon, Loader2Icon, PlayIcon, Trash2Icon } from
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Checkbox } from "./ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import { Badge } from "./ui/badge";
+import { FILE_STATUS, FileItem } from "@/types/types";
+import { FileState } from "./file-state";
 
 const eventEmitter = new EventEmitter()
 const CHANGE_STATUS_NAME = 'change-status'
-enum FILE_STATUS {
-    ADDED,
-    PROCESSING,
-    SUCCESS,
-    ERROR
-}
 
-type FileItem = {
-    file: File, tipo: string, id: string, csv?: string, registros?: number, status?: FILE_STATUS, selected: boolean
-}
 
 export function FormFiles({ tipos }: { tipos: { name: string, id: string }[] }) {
     const [files, setFiles] = useState<FileItem[]>([])
@@ -81,7 +75,7 @@ export function FormFiles({ tipos }: { tipos: { name: string, id: string }[] }) 
             }
 
             formData.append('file', file.file)
-            const { data } = await axios.post<{ csv: string, registros:number }>(`https://extratos-api.deltex.com.br/direct?template=${file.tipo}`, formData)
+            const { data } = await axios.post<{ csv: string, registros: number }>(`https://extratos-api.deltex.com.br/direct?template=${file.tipo}`, formData)
 
             dispatchChangeStatus(id, FILE_STATUS.SUCCESS)
 
@@ -175,13 +169,13 @@ export function FormFiles({ tipos }: { tipos: { name: string, id: string }[] }) 
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {files.map(({ file, tipo, id, csv = null, status = '', selected, registros }) => (
+                            {files.map(({ file, tipo, id, csv = null, status, selected, registros }) => (
                                 <TableRow key={id}>
                                     <TableHead>
                                         <Checkbox checked={selected} onCheckedChange={(v) => changeFile(id, { selected: !!v })} />
                                     </TableHead>
                                     <TableCell>{file.name}</TableCell>
-                                    <TableCell>{filesize(file.size, { round: 1})}</TableCell>
+                                    <TableCell>{filesize(file.size, { round: 1 })}</TableCell>
                                     <TableCell>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
@@ -194,17 +188,20 @@ export function FormFiles({ tipos }: { tipos: { name: string, id: string }[] }) 
                                                     <DropdownMenuItem onClick={() => changeFile(id, { tipo: t.id })} key={t.id}>{t.name}</DropdownMenuItem>
                                                 ))}
                                             </DropdownMenuContent>
-                                        </DropdownMenu> 
+                                        </DropdownMenu>
                                     </TableCell>
                                     <TableCell>
-                                        <span className="text-sm text-stone-600">
+                                        <FileState status={status} registros={registros} />
+                                        {/* <Badge>
                                             {
                                                 ["PENDENTE", "RODANDO", "CONCLUIDO", "FALHOU"][parseInt(status.toString())]
-                                            } 
-                                        </span> &nbsp;
-                                        {registros && <span className="text-xs text-stone-600">({registros})</span>}
+                                            }
+                                        </Badge> &nbsp;
+                                        {registros && (
+                                            <span className="text-xs text-stone-600">({registros})</span>
+                                        )} */}
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="py-0">
                                         <div className="flex items-center justify-end">
                                             {status == FILE_STATUS.PROCESSING && (
                                                 <Button size={'sm'} variant={'ghost'}>
@@ -217,8 +214,8 @@ export function FormFiles({ tipos }: { tipos: { name: string, id: string }[] }) 
                                                 </Button>
                                             )}
                                             {status == FILE_STATUS.SUCCESS && csv && <Button size={'sm'} variant={'ghost'} asChild>
-                                                <a target="_blank" href={csv}>
-                                                    <DownloadIcon color="green" />
+                                                <a target="_blank" href={csv} className="text-green-800">
+                                                   Baixar <DownloadIcon  />
                                                 </a>
                                             </Button>}
                                             <Button onClick={() => handleProcess(id)} size={'sm'} variant={'ghost'}>
