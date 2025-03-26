@@ -1,6 +1,7 @@
 import { FILE_STATUS } from "@/types/types"
 import { Badge } from "./ui/badge"
 import { cn } from "@/lib/utils"
+import { Separator } from "./ui/separator"
 
 type Props = {
     status: FILE_STATUS,
@@ -17,10 +18,12 @@ export function FileState({ status, registros }: Props) {
 
     return (
         <>
-            <Badge  className={cn('text-xs',{'bg-green-700': status == FILE_STATUS.SUCCESS})} variant={variant}>
+            <Badge className={cn('text-xs', { 'bg-green-700': status == FILE_STATUS.SUCCESS })} variant={variant}>
                 {labels[status]}
                 {registros && (
-                    (<span>{registros}</span>)
+                    <>
+                        <span className="text-xs font-light">({registros})</span>
+                    </>
                 )}
             </Badge>
         </>
