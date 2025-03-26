@@ -194,7 +194,7 @@ export function FormFiles({ tipos }: { tipos: { name: string, id: string }[] }) 
                                                     <DropdownMenuItem onClick={() => changeFile(id, { tipo: t.id })} key={t.id}>{t.name}</DropdownMenuItem>
                                                 ))}
                                             </DropdownMenuContent>
-                                        </DropdownMenu>
+                                        </DropdownMenu> 
                                     </TableCell>
                                     <TableCell>
                                         <span className="text-sm text-stone-600">
@@ -202,7 +202,7 @@ export function FormFiles({ tipos }: { tipos: { name: string, id: string }[] }) 
                                                 ["PENDENTE", "RODANDO", "CONCLUIDO", "FALHOU"][parseInt(status.toString())]
                                             } 
                                         </span> &nbsp;
-                                        {registros && <span>{registros}</span>}
+                                        {registros && <span className="text-xs text-stone-600">({registros})</span>}
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex items-center justify-end">
