@@ -23,7 +23,7 @@ enum FILE_STATUS {
 }
 
 type FileItem = {
-    file: File, tipo: string, id: string, csv?: string, status?: FILE_STATUS, selected: boolean
+    file: File, tipo: string, id: string, csv?: string, registros?: number, status?: FILE_STATUS, selected: boolean
 }
 
 export function FormFiles({ tipos }: { tipos: { name: string, id: string }[] }) {
@@ -89,6 +89,7 @@ export function FormFiles({ tipos }: { tipos: { name: string, id: string }[] }) 
                 if (f.id == id) {
                     f.status = FILE_STATUS.SUCCESS
                     f.csv = data.csv
+                    f.registros = data.registros
                 }
                 return f;
             }))
@@ -174,7 +175,7 @@ export function FormFiles({ tipos }: { tipos: { name: string, id: string }[] }) 
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {files.map(({ file, tipo, id, csv = null, status = '', selected }) => (
+                            {files.map(({ file, tipo, id, csv = null, status = '', selected, registros }) => (
                                 <TableRow key={id}>
                                     <TableHead>
                                         <Checkbox checked={selected} onCheckedChange={(v) => changeFile(id, { selected: !!v })} />
@@ -199,8 +200,9 @@ export function FormFiles({ tipos }: { tipos: { name: string, id: string }[] }) 
                                         <span className="text-sm text-stone-600">
                                             {
                                                 ["PENDENTE", "RODANDO", "CONCLUIDO", "FALHOU"][parseInt(status.toString())]
-                                            }
-                                        </span>
+                                            } 
+                                        </span> &nbsp;
+                                        {registros && <span>{registros}</span>}
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex items-center justify-end">
